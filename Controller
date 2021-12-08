@@ -1,0 +1,83 @@
+package com.BookRatingandCommenting;
+
+import com.BookDetails.Specifications;
+import com.BookRating.BookRating;
+import com.BookComments.Comments;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import java.util.ArrayList;
+import java.sql.*;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@CrossOrigin(origins = "http://localhost:1433")
+@RestController
+@RequestMapping("/api")
+
+@SpringBootApplication
+public class Controller {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Controller.class, args);
+    }
+
+    @GetMapping (value = "/AddReview")
+    public ResponseEntity<Object> Addreview(@RequestParam(value = "Id") int id,
+                                            @RequestParam(value = "ISBN") int ISBN,
+                                            @RequestParam(value = "name") String name,
+                                            @RequestParam(value = "comment") String comment,
+                                            @RequestParam(value = "rating") int rating){
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection con = DriverManager.getConnection(
+                    "http://localhost:1433", "Bronson", "Doodles0407!");
+            String query = "INSERT INTO `ratings`(`id`, `ISBN`, `name`, `comment`, `rating`) "
+                    + "VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement preparedStmt = con.prepareStatement(query);
+            preparedStmt.setInt(1, id);
+            preparedStmt.setInt(2, ISBN);
+            preparedStmt.setString(3, name);
+            preparedStmt.setString(4, comment);
+            preparedStmt.setInt(5, rating);
+            preparedStmt.execute();
+            con.close();
+        }
+        catch (Exception e) {
+            System.out.println(e);
+        }
+        return new ResponseEntity<>("Review is created successfully", HttpStatus.OK);
+    }
+    @GetMapping (value = "/retrievereview")
+    public ResponseEntity<Object> Getreview(@RequestParam(value = "id", required = false, defaultValue = "3") int id) {
+
+        try {
+            List<Specifications> toreturn = new ArrayList<Specifications>();
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection con = DriverManager.getConnection(
+                    "http://localhost:1433", "Bronson", "Doodles0407!");
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT id, ISBN, name, comment, rating FROM ratings WHERE id = " + id);
+
+            while (rs.next()) {
+                Specifications review = new Specifications(rs.getInt("id"), rs.getInt("ISBN"),
+                        rs.getString("name"), rs.getString("comment"), rs.getInt("rating"));
+                toreturn.add(review);
+            }
+            con.close();
+            return new ResponseEntity<>(toreturn, HttpStatus.OK);
+        }
+        catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+}
+
